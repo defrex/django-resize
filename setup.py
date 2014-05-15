@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-resize',
-    description='A simple resize filter for Django',
+    description='Simple Django Image Resizing',
     url='http://github.com/defrex/django-resize/',
     license='MIT',
     author='Aron Jones',
