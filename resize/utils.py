@@ -147,9 +147,9 @@ def resize_image(img_file, size=100):
     '''
     This template tag resizes images.
 
-    It will resize the image once, saving the result to desk. Subsiquest calls
-    for the same resize will then result in returning the old image, so that
-    the resizing action is cached.
+    It will resize the image once, saving the result to disk. Subquestion calls
+    for the same resize will then result in returning the saved result, so that
+    the resizing action isn't performed each time.
 
     The size argument can be in one of two forms: width or widthxheight. "auto"
     is an acceptable value for either. Some examples:
