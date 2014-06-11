@@ -1,4 +1,6 @@
 
+from __future__ import absolute_import, print_function, unicode_literals
+
 import logging
 
 from django.conf import settings
@@ -6,7 +8,7 @@ from django.template import Library
 from django.contrib.sites.models import Site
 from django.contrib.staticfiles.finders import find as find_file
 
-from resize.utils import resize_image, get_new_size, calc_height, calc_width
+from resize.utils import resize_image, calc_height, calc_width
 
 logger = logging.getLogger(__name__)
 
