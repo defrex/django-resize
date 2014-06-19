@@ -5,6 +5,7 @@ from shutil import rmtree
 
 from django.test import TestCase
 from django.core.files.images import ImageFile
+from django.template.loader import render_to_string
 
 from resize.utils import calc_height, calc_width, resize_image
 
@@ -123,3 +124,9 @@ class ResizeTest(TestCase):
         img = self.get_resize(size)
         self.assertEqual(img.size[0], 100)
         self.assertEqual(img.size[1], 100)
+
+    def test_django_template(self):
+        render_to_string('resize/test.html')
+
+    def test_jinja_template(self):
+        render_to_string('resize/test.jinja')

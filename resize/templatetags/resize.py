@@ -10,12 +10,24 @@ from django.contrib.staticfiles.finders import find as find_file
 
 from resize.utils import resize_image, calc_height, calc_width
 
+try:
+    from django_jinja import library
+    lib = library.Library()
+
+except ImportError:
+    class LibraryStub(object):
+        @staticmethod
+        def global_function(func):
+            return func
+    lib = LibraryStub()
+
 logger = logging.getLogger(__name__)
 
 register = Library()
 
 
 @register.filter
+@lib.global_function
 def resize(img_file, size=100):
     try:
         return resize_image(img_file, size)
@@ -25,6 +37,7 @@ def resize(img_file, size=100):
 
 
 @register.filter
+@lib.global_function
 def resize_static(img_path, size=100):
     try:
         abs_path = find_file(img_path)
@@ -40,6 +53,7 @@ def resize_static(img_path, size=100):
 
 
 @register.filter
+@lib.global_function
 def resize_absolute(img_file, size=100):
     try:
         path = resize_image(img_file, size=size)
@@ -52,6 +66,7 @@ def resize_absolute(img_file, size=100):
 
 
 @register.filter
+@lib.global_function
 def height(img_file, size=100):
     try:
         return calc_height(img_file, size)
@@ -61,6 +76,7 @@ def height(img_file, size=100):
 
 
 @register.filter
+@lib.global_function
 def width(img_file, size=100):
     try:
         return calc_width(img_file, size)
