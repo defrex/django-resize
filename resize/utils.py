@@ -1,8 +1,11 @@
 
+from __future__ import print_function
 import os
 import logging
+from StringIO import StringIO
 
-from django.core.cache import cache
+from django.core.files.storage import default_storage
+from django.core.files.images import ImageFile
 from django.utils import six
 
 from PIL import Image, ExifTags
@@ -15,21 +18,18 @@ def get_file_path(img_file):
         return img_file
     if hasattr(img_file, 'path'):
         return img_file.path
-    else:
+    elif img_file is not None:
         return img_file.name
 
 
 def get_thumb_name(img_file, size):
-    # CAUTION: changing this number will force a re-render of all images
-    resize_version = 1
-
-    filename = get_file_path(img_file)
-    filehead, filetail = os.path.split(filename)
-    thumb_dir = '%s_thumbs' % filetail
-    thumb_name = '%s/v%i_at_%s.jpg' % (thumb_dir, resize_version, str(size))
-    thumb_filename = os.path.join(filehead, thumb_name)
-
-    return thumb_name, thumb_filename
+    if img_file is None:
+        return ''
+    filehead, filetail = os.path.split(get_file_path(img_file))
+    return os.path.join(
+        filehead,
+        '{}_thumbs/v1_at_{}.jpg'.format(filetail, str(size)),
+    )
 
 
 def parse_size(size):
@@ -120,58 +120,40 @@ def get_exif(img):
             exif = exif.items()
             exif = dict(exif)
             return exif
-    except IOError:
+    except (IOError, IndexError):
         pass
 
     return {}
 
 
-def get_current_size(img_file):
-    img = Image.open(get_file_path(img_file))
-
-    w, h = img.size
-
-    exif = get_exif(img)
-
-    for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation] == 'Orientation':
-            break
-
-    if orientation in exif and exif[orientation] >= 5:
-        h, w = w, h
-
-    return w, h
-
-
-def resize_image(img_file, size=100):
+def resize_image(img_file, size=100, storage=default_storage):
     '''
-    This template tag resizes images.
-
-    It will resize the image once, saving the result to disk. Subquestion calls
-    for the same resize will then result in returning the saved result, so that
-    the resizing action isn't performed each time.
-
     The size argument can be in one of two forms: width or widthxheight. "auto"
     is an acceptable value for either. Some examples:
 
-    {{ img|resize:50 }} - this will set with width to 50, with the height scaled
+    resize_image(img, 50) - this will set with width to 50, with the height scaled
     accordingly.
 
-    {{ img|resize:'auto' }} - this won't resize the image at all
+    resize_image(img, 'auto') - this won't resize the image at all
 
-    {{ img|resize:'50x50' }} - the width and height will be 50px, causing the
+    resize_image(img, '50x50') - the width and height will be 50px, causing the
     image to be letterboxed (never stretched).
 
-    {{ img|resize:'autox50' }} - this will set the height and scale the width
+    resize_image(img, 'autox50') - this will set the height and scale the width
 
     '''
-    if img_file is None: return ''
+    if img_file is None:
+        return
 
-    thumb_name, thumb_filename = get_thumb_name(img_file, size)
+    if hasattr(img_file, 'storage'):
+        storage = img_file.storage
+
+    thumb_filename = get_thumb_name(img_file, size)
 
     # if the image wasn't already resized, resize it
-    if not os.path.exists(thumb_filename):
-        img = Image.open(get_file_path(img_file))
+    if not storage.exists(thumb_filename):
+        img_file.seek(0)
+        img = Image.open(img_file)
 
         exif = get_exif(img)
 
@@ -209,63 +191,8 @@ def resize_image(img_file, size=100):
 
         if img.mode != 'RGB': img = img.convert('RGB')
 
-        path = os.path.split(thumb_filename)[0]
-        if not os.path.isdir(path): os.mkdir(path)
+        image_io = StringIO()
+        img.save(image_io, 'JPEG', quality=80)
+        storage.save(thumb_filename, ImageFile(image_io))
 
-        img.save(thumb_filename, 'JPEG', quality=90)
-
-    if hasattr(img_file, 'url'):
-        urlhead, urltail = os.path.split(img_file.url)
-        return '%s/%s' % (urlhead, thumb_name)
-
-    else:
-        return thumb_name
-
-
-def get_new_size(img_file, input_size):
-    "calculates the new size for the image, based on the desired size argument"
-    thumb_name, thumb_filename = get_thumb_name(img_file, input_size)
-    cache_key = 'thumb_size_%s' % thumb_filename
-    sizes = cache.get(cache_key, {})
-    if input_size in sizes and not input_size == 698:
-        return sizes[input_size]
-
-    target_size = parse_size(input_size)
-
-    img = Image.open(get_file_path(img_file))
-    current_w, current_h = img.size
-
-    exif = get_exif(img)
-    for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation] == 'Orientation':
-            break
-    if orientation in exif and exif[orientation] >= 5:
-        current_h, current_w = current_w, current_h
-
-    scaled_w, scaled_h = get_scaled_down_size((current_w, current_h), target_size)
-    target_w, target_h = target_size
-
-    if target_w is not None and target_h is not None:
-        result = target_w, target_h
-
-    elif target_w is None and target_h is not None:
-        result = scaled_w, target_h
-
-    elif target_h is None and target_w is not None:
-        result = target_w, scaled_h
-
-    else:
-        result = scaled_w, scaled_h
-
-    sizes[input_size] = result
-    cache.set(cache_key, sizes)
-
-    return result
-
-
-def calc_height(img_file, size=100):
-    return get_new_size(img_file, size)[1]
-
-
-def calc_width(img_file, size=100):
-    return get_new_size(img_file, size)[0]
+    return thumb_filename
