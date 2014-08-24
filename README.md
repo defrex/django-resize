@@ -4,21 +4,27 @@
 
 Simple Django Image Resizing
 
-This template tag resizes images.
+Step 1, use the `ImageField` subclass `resize.fields.ResizedImageField` like so.
 
-It will resize the image once, saving the result to disk. Subquestion calls
-for the same resize will then result in returning the saved result, so that
-the resizing action isn't performed each time.
+    from django.db import models
+    from resize.fields import ResizedImageField
 
-The size argument can be in one of two forms: `width` or `widthxheight`. `auto`
-is an acceptable value for either. Some examples:
+    class MyModel(models.Model):
+        image = ResizedImageField(resolutions=('32x32', '100x100'))
 
-`{{ img|resize:50 }}` - this will set with width to 50, with the height scaled
-accordingly.
+The resolutions should be in the form`widthxheight`, where `auto`
+is an acceptable value for either. For example `100xauto`, `50x20` or `autox2000`.
 
-`{{ img|resize:'auto' }}` - this won't resize the image at all
+During normal operation, new resolutions of the image will be generated
+whenever it's changed. However, if you raw-insert data, or add new resolutions
+to the list, you can generate any missing images with a manage command.
 
-`{{ img|resize:'50x50' }}` - the width and height will be 50px, causing the
-image to be letterboxed (never stretched).
+    ./manage.py resize_fields
 
-`{{ img|resize:'autox50' }}` - this will set the height and scale the width
+In your templates, a templatetag is provided to use the correct resolution like so.
+
+    <img src="{{ my_model.image|resize:'32x32' }}">
+
+or in Jinja (via [django-jinja](http://django-jinja.readthedocs.org/en/latest/))
+
+    <img src=""{{ resize(my_model.image, '32x32') }}">
