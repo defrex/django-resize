@@ -2,7 +2,11 @@
 from __future__ import print_function
 import os
 import logging
-from StringIO import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 from django.core.files.storage import default_storage
 from django.core.files.images import ImageFile
@@ -76,6 +80,12 @@ def get_scaled_down_size(current_size, target_size):
     if target_w is None and target_h is None:
         return int(cur_w), int(cur_h)
 
+    elif target_h is None:
+        return scale_w()
+
+    elif target_w is None:
+        return scale_h()
+
     elif target_w >= cur_w or target_h >= cur_h:
         return int(cur_w), int(cur_h)
 
@@ -87,12 +97,6 @@ def get_scaled_down_size(current_size, target_size):
 
     elif cur_w > target_w and cur_h < target_h:
         return int(cur_w), int(target_h)
-
-    elif target_h is None:
-        return scale_w()
-
-    elif target_w is None:
-        return scale_h()
 
     # tall image
     elif target_h == target_w:
@@ -184,8 +188,8 @@ def resize_image(img_file, size=100, storage=default_storage):
         # bg.putalpha(Image.new('L', target_size, color=0))
 
         bg = Image.new('RGB', target_size, color=(255, 255, 255))
-        box = ((target_size[0] - int(img.size[0])) / 2,
-               (target_size[1] - int(img.size[1])) / 2)
+        box = (int((target_size[0] - int(img.size[0])) / 2),
+               int((target_size[1] - int(img.size[1])) / 2))
         bg.paste(img, box)
         img = bg
 

@@ -6,14 +6,13 @@ Simple Django Image Resizing
 
 Step 1, use the `ImageField` subclass `resize.fields.ResizedImageField` like so.
 
-    from django.db import models
     from resize.fields import ResizedImageField
 
-    class MyModel(models.Model):
+    class MoModel(models.Model):
         image = ResizedImageField(resolutions=('32x32', '100x100'))
 
 The resolutions should be in the form`widthxheight`, where `auto`
-is an acceptable value for either. For example `100xauto`, `50x20` or `autox2000`.
+is an acceptable value for either. For example `100xauto` `50x20` `autox2000`.
 
 During normal operation, new resolutions of the image will be generated
 whenever it's changed. However, if you raw-insert data, or add new resolutions

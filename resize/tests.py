@@ -1,4 +1,6 @@
 
+from __future__ import unicode_literals
+
 import os
 from PIL import Image
 from shutil import rmtree, copytree
@@ -29,7 +31,7 @@ class ResizedFieldTest(models.Model):
             cls,
             no_style(),
             [])
-        create_sql = u'\n'.join(raw_sql).encode('utf-8')
+        create_sql = u'\n'.join(raw_sql)
         cls.delete_table()
         cursor = connection.cursor()
         try:
@@ -77,7 +79,7 @@ class ResizeTest(TestCase):
         return '{}/{}'.format(self.test_image_directory, filename)
 
     def get_image(self, filename=None):
-        return open(self.get_image_path(filename))
+        return open(self.get_image_path(filename), 'rb')
 
     def get_resize(self, size, filename=None):
         filename = filename or self.filename
