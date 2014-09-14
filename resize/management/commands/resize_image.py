@@ -1,6 +1,7 @@
 
 from __future__ import print_function, unicode_literals
 from optparse import make_option
+import os
 
 from django.core.management.base import BaseCommand
 
@@ -21,5 +22,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for image_path in args:
-            with open(image_path) as image_file:
+            with open(os.path.abspath(image_path)) as image_file:
                 resize_image(image_file, options['resolution'])
