@@ -203,7 +203,10 @@ def resize_image(img_file, size=100, storage=default_storage):
 
         if storage is None:
             thumb_dir = '/'.join(thumb_filename.split('/')[:-1])
-            os.makedirs(thumb_dir)
+            try:
+                os.makedirs(thumb_dir)
+            except OSError:
+                pass
             img.save(thumb_filename, 'JPEG', quality=80)
         else:
             image_io = StringIO()
