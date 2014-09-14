@@ -50,7 +50,7 @@ class Command(BaseCommand):
                             resize_image(field.storage.open(image), resolution)
                         except IOError:
                             print('        Image does not exist', image)
-                            if options.fails:
+                            if options['fails']:
                                 raise
 
         print('Resizing complete')
