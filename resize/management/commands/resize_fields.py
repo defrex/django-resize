@@ -3,13 +3,22 @@ from __future__ import print_function, unicode_literals
 
 from django.core.management.base import BaseCommand
 from django.apps import apps
+from optparse import make_option
 
 from resize.fields import ResizedImageField
 from resize.utils import resize_image
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list
+    help = 'Ensures that all ResizedImageFields are available in all required resolutions.'
+    option_list = BaseCommand.option_list + (
+        make_option('--fail-loud',
+            action='store_true',
+            dest='fails',
+            default=False,
+            help='Fail on IOErrors',
+        ),
+    )
 
     def handle(self, *args, **options):
         print('Looking for resized fields')
@@ -41,5 +50,7 @@ class Command(BaseCommand):
                             resize_image(field.storage.open(image), resolution)
                         except IOError:
                             print('        Image does not exist', image)
+                            if options.fails:
+                                raise
 
         print('Resizing complete')
