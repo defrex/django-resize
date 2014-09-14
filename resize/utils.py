@@ -11,7 +11,6 @@ except ImportError:
 from django.core.files.storage import default_storage
 from django.core.files.images import ImageFile
 from django.utils import six
-from django.core.exceptions import SuspiciousFileOperation
 
 from PIL import Image, ExifTags
 
