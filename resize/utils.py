@@ -11,6 +11,7 @@ except ImportError:
 from django.core.files.storage import default_storage
 from django.core.files.images import ImageFile
 from django.utils import six
+from django.core.exceptions import SuspiciousFileOperation
 
 from PIL import Image, ExifTags
 
@@ -154,8 +155,13 @@ def resize_image(img_file, size=100, storage=default_storage):
 
     thumb_filename = get_thumb_name(img_file, size)
 
+    if storage is None:
+        exists = os.path.isfile(thumb_filename)
+    else:
+        exists = storage.exists(thumb_filename)
+
     # if the image wasn't already resized, resize it
-    if not storage.exists(thumb_filename):
+    if not exists:
         img_file.seek(0)
         img = Image.open(img_file)
 
@@ -195,8 +201,13 @@ def resize_image(img_file, size=100, storage=default_storage):
 
         if img.mode != 'RGB': img = img.convert('RGB')
 
-        image_io = StringIO()
-        img.save(image_io, 'JPEG', quality=80)
-        storage.save(thumb_filename, ImageFile(image_io))
+        if storage is None:
+            thumb_dir = '/'.join(thumb_filename.split('/')[:-1])
+            os.makedirs(thumb_dir)
+            img.save(thumb_filename, 'JPEG', quality=80)
+        else:
+            image_io = StringIO()
+            img.save(image_io, 'JPEG', quality=80)
+            storage.save(thumb_filename, ImageFile(image_io))
 
     return thumb_filename

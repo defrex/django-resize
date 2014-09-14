@@ -22,5 +22,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for image_path in args:
-            with open(os.path.abspath(image_path)) as image_file:
-                resize_image(image_file, options['resolution'])
+            with open(os.path.abspath(image_path), 'rb') as image_file:
+                resize_image(image_file, options['resolution'], storage=None)
