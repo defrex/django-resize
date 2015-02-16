@@ -49,3 +49,6 @@ class ResizedImageField(ImageField):
                 resize_image(file_object, resolution)
 
         return file_object
+
+    def value_to_string(self, obj):
+        return self.get_prep_value(self._get_val_from_obj(obj))
