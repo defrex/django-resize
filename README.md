@@ -4,7 +4,12 @@
 
 Simple Django Image Resizing
 
-Step 1, use the `ImageField` subclass `resize.fields.ResizedImageField` like so.
+Install app
+```python
+INSTALLED_APPS += ('resize',)
+```
+
+Then, use the `ImageField` subclass `resize.fields.ResizedImageField` like so.
 ```python
 from resize.fields import ResizedImageField
 
@@ -22,6 +27,8 @@ to the list, you can generate any missing images with a manage command.
 ```
 In your templates, a templatetag is provided to use the correct resolution like so.
 ```html
+{% load resize %}
+
 <img src="{{ my_model.image|resize:'32x32' }}">
 ```
 or in Jinja (via [django-jinja](http://django-jinja.readthedocs.org/en/latest/))
